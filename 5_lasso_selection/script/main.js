@@ -8,17 +8,32 @@ import {
 
 const cars = await d3.csv('./data/mtcars.csv', d3.autoType);
 
+const defaultColor = '#aa0000';
+const unselectedColor = '#aaaaaa';
 const chart = scatterplot(cars, {
   svgId: 'scatterplot',
   x: d => d.mpg,
   y: d => d.hp,
-  c: '#aa0000'
+  c: defaultColor
 });
 
 d3.select('#view_b').append(() => chart);
 
-const lasso = lassoSelection(chart, d3.select(chart).selectAll('circle').nodes());
+const lasso = lassoSelection();
+
 lasso.on('end', () => {
-  console.log(lasso.selected())
+  const selected = lasso.selected(); // get list of selected/unselected in boolean array
+
+  if (Math.max(...selected) === 0) { // nothing selected by lasso
+    chart.update(defaultColor);
+  } else {
+    const pointColors = selected.map(s => s ? defaultColor : unselectedColor);
+    chart.update(pointColors);
+  }
 });
-d3.select(chart).call(lasso());
+
+d3.select(chart).call(
+  lasso(chart, d3.select(chart).selectAll('circle').nodes()));
+
+// Note for me: current lassoSelection needs to set lasso.on in advance
+// also, need to indicate lasso(svgAre, svgItems). See TODO list in lasso.js

@@ -1,5 +1,18 @@
 import * as d3 from 'https://cdn.skypack.dev/d3@7'; // TODO: wanna avoid depending on d3
 
+// TODO:
+// 1. avoid depending on d3
+// 2. remove svgArea argument (see below)
+// 3. enable to define on events even in .call
+// 4. make selection faster
+// const lasso = lassoSelection();
+// lasso.on('end', () => {
+//   console.log(lasso.selected())
+// });
+// d3.select(chart).call(
+//   lasso(chart, d3.select(chart).selectAll('circle').nodes()));
+
+
 const context2d = (top, left, width, height) => {
   const canvas = document.createElement('canvas');
   canvas.width = width * devicePixelRatio;
@@ -34,8 +47,22 @@ const isInsideLasso = (point, lasso) => {
   return isInside;
 }
 
-const insideLasso = (points, lasso) =>
-  points.map(point => isInsideLasso(point, lasso));
+const insideLasso = (points, lasso) => {
+  // use these range to reduce # of points checked
+  // TODO: can do a smarter way e.g., using quad tree
+  const lassoXs = lasso.map(pos => pos[0]);
+  const lassoYs = lasso.map(pos => pos[1]);
+  const minX = Math.min(...lassoXs);
+  const maxX = Math.max(...lassoXs);
+  const minY = Math.min(...lassoYs);
+  const maxY = Math.max(...lassoYs);
+
+  return points.map(point =>
+    (point[0] >= minX && point[0] <= maxX) && (point[1] >= minY && point[1] <= maxY) ?
+    isInsideLasso(point, lasso) :
+    false);
+}
+
 
 const getCenters = svgItems => {
   const points = [];
@@ -48,7 +75,7 @@ const getCenters = svgItems => {
   return points;
 }
 
-export const lassoSelection = (svgArea, svgItems, {
+export const lassoSelection = ({
   stroke = 'black',
   strokeWidth = 1.5,
   on = {
@@ -59,61 +86,61 @@ export const lassoSelection = (svgArea, svgItems, {
 } = {}) => {
   let selected = null;
 
-  const bcRect = svgArea.getBoundingClientRect();
-  const width = bcRect.width;
-  const height = bcRect.height;
+  function selection(svgArea, svgItems) {
+    const bcRect = svgArea.getBoundingClientRect();
+    const width = bcRect.width;
+    const height = bcRect.height;
 
-  const context = context2d(bcRect.top, bcRect.left, width, height);
-  const curve = d3.curveBasisClosed(context);
+    const context = context2d(bcRect.top, bcRect.left, width, height);
+    const curve = d3.curveBasisClosed(context);
 
-  const points = getCenters(svgItems);
+    const points = getCenters(svgItems);
 
-  const renderLasso = points => {
-    context.clearRect(0, 0, width, height);
-    context.strokeStyle = stroke;
-    context.lineWidth = strokeWidth;
+    const renderLasso = points => {
+      context.clearRect(0, 0, width, height);
+      context.strokeStyle = stroke;
+      context.lineWidth = strokeWidth;
 
-    context.beginPath();
-    curve.lineStart();
-    for (const point of points) {
-      curve.point(...point);
+      context.beginPath();
+      curve.lineStart();
+      for (const point of points) {
+        curve.point(...point);
+      }
+      if (points.length === 1) curve.point(...points[0]);
+      curve.lineEnd();
+      context.stroke();
+
+      context.canvas.dispatchEvent(new CustomEvent('input'));
     }
-    if (points.length === 1) curve.point(...points[0]);
-    curve.lineEnd();
-    context.stroke();
 
-    context.canvas.dispatchEvent(new CustomEvent('input'));
-  }
+    const lasso = () => {
+      // relative: x, y positions used for drawing in canvas
+      // absolute: x, y positions used for lasso selection of svg elements
+      const stroke = {
+        relative: [],
+        absolute: []
+      };
 
-  const lasso = () => {
-    // relative: x, y positions used for drawing in canvas
-    // absolute: x, y positions used for lasso selection of svg elements
-    const stroke = {
-      relative: [],
-      absolute: []
+      return stroke;
+    }
+
+    const started = event => {
+      d3.select('body').append(() => context.canvas);
+      renderLasso([]);
+      on.start(event);
+    };
+    const dragged = event => {
+      event.subject.relative.push([event.x, event.y]);
+      event.subject.absolute.push([event.sourceEvent.clientX, event.sourceEvent.clientY]);
+      renderLasso(event.subject.relative);
+      on.drag(event);
+    }
+    const ended = event => {
+      selected = insideLasso(points, event.subject.absolute);
+      d3.select(context.canvas).remove();
+      on.end(event);
     };
 
-    return stroke;
-  }
-
-  const started = event => {
-    d3.select('body').append(() => context.canvas);
-    renderLasso([]);
-    on.start(event);
-  };
-  const dragged = event => {
-    event.subject.relative.push([event.x, event.y]);
-    event.subject.absolute.push([event.sourceEvent.clientX, event.sourceEvent.clientY]);
-    renderLasso(event.subject.relative);
-    on.drag(event);
-  }
-  const ended = event => {
-    selected = insideLasso(points, event.subject.absolute);
-    d3.select(context.canvas).remove();
-    on.end(event);
-  };
-
-  const selection = () => {
     return d3.drag()
       .container(context.canvas)
       .subject(lasso)

@@ -90,7 +90,7 @@ export const scatterplot = (data, {
     .selectAll('circle')
     .data(I)
     .join('circle')
-    .attr('fill', i => typeof C[i] === 'number' ? cScale(C[i]) : C[i])
+    .attr('fill', i => C[i])
     .attr('cx', i => xScale(X[i]))
     .attr('cy', i => yScale(Y[i]))
     .attr('r', r);
