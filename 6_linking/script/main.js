@@ -17,7 +17,7 @@ const scatter = scatterplot(cars, {
   y: d => d.hp,
   c: defaultColor,
   width: d3.select('#view_b').node().getBoundingClientRect().width,
-  height: d3.select('#view_b').node().getBoundingClientRect().height,
+  height: d3.select('#view_b').node().getBoundingClientRect().width,
 });
 
 // prepare data to mimic network data

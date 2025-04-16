@@ -1,4 +1,5 @@
-import * as d3 from 'https://cdn.skypack.dev/d3@7'; // TODO: wanna avoid depending on d3
+// import * as d3 from 'https://cdn.skypack.dev/d3@7'; // TODO: wanna avoid depending on d3
+import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
 // TODO:
 // 1. avoid depending on d3
