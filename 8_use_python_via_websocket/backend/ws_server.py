@@ -47,7 +47,7 @@ async def _serve(event_loop, executor, stop, host="0.0.0.0", port=9000):
         await stop
 
 
-async def _handler(ws, path, event_loop, executor):
+async def _handler(ws, event_loop, executor):
     try:
         while True:
             recv_msg = await ws.recv()
