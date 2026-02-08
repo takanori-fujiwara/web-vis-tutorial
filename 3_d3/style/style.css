@@ -25,7 +25,7 @@ body {
   margin-right: 5px;
   border-style: solid;
   border-width: thin;
-  border-color: #DDDDDD;
+  border-color: #dddddd;
 }
 
 #view_b {
@@ -35,7 +35,7 @@ body {
   height: 97vh;
   border-style: solid;
   border-width: thin;
-  border-color: #DDDDDD;
+  border-color: #dddddd;
 }
 
 #view_cd {
@@ -47,7 +47,7 @@ body {
   margin-right: 14px;
   border-style: solid;
   border-width: thin;
-  border-color: #DDDDDD;
+  border-color: #dddddd;
 }
 
 #view_c {
@@ -60,7 +60,7 @@ body {
   margin-right: 5px;
   border-style: solid;
   border-width: thin;
-  border-color: #DDDDDD;
+  border-color: #dddddd;
 }
 
 #view_d {
@@ -73,7 +73,7 @@ body {
   margin-right: 5px;
   border-style: solid;
   border-width: thin;
-  border-color: #DDDDDD;
+  border-color: #dddddd;
 }
 
 .view_title {
@@ -84,6 +84,6 @@ body {
   padding-left: 5px;
   padding-right: 6px;
   font-size: 10px;
-  color: #FFFFFF;
-  background-color: #52617B;
+  color: #ffffff;
+  background-color: #52617b;
 }

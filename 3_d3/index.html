@@ -1,37 +1,36 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
+  <head>
+    <link rel="stylesheet" href="style/style.css" />
+    <title>Visual Interface</title>
+  </head>
 
-<head>
-  <link rel='stylesheet' href='style/style.css'>
-  <title>Visual Interface</title>
-</head>
-
-<body>
-  <div id='view_a'>
-    <div class='view_title'>View A</div>
-    <br />
-    To use D3, load this html with http server.
-    For example, move to this diretory in terminal and run python server with:
-    <br />
-    > python3 -m http.server
-    <br />
-    Then, launch your browser and enter url:
-    <br />
-    > http://localhost:8000/
-  </div>
-  <div id='view_b'>
-    <div class='view_title'>View B</div>
-  </div>
-  <div id='view_cd'>
-    <div class='view_title'>View C&D</div>
-    <div id='view_c'>
-      <div class='view_title'>View C</div>
+  <body>
+    <div id="view_a">
+      <div class="view_title">View A</div>
+      <br />
+      To use D3, load this html with http server. For example, move to this
+      diretory in terminal and run python server with:
+      <br />
+      > python3 -m http.server
+      <br />
+      Then, launch your browser and enter url:
+      <br />
+      > http://localhost:8000/
     </div>
-    <div id='view_d'>
-      <div class='view_title'>View D</div>
+    <div id="view_b">
+      <div class="view_title">View B</div>
     </div>
-  </div>
-  <script src='script/main.js' type='module'></script><!-- JavaScript File can be imported like this-->
-</body>
-
+    <div id="view_cd">
+      <div class="view_title">View C&D</div>
+      <div id="view_c">
+        <div class="view_title">View C</div>
+      </div>
+      <div id="view_d">
+        <div class="view_title">View D</div>
+      </div>
+    </div>
+    <script src="script/main.js" type="module"></script>
+    <!-- JavaScript File can be imported like this-->
+  </body>
 </html>
