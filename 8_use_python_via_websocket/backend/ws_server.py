@@ -33,25 +33,26 @@ class Message(IntEnum):
             return "passNetworkLayout"
 
 
-async def _send(event_loop, executor, ws, args, func):
+async def _send(executor, ws, args, func):
+    event_loop = asyncio.get_running_loop()
     buf = await event_loop.run_in_executor(executor, func, args)
     await ws.send(buf)
 
 
-async def _serve(event_loop, executor, stop, host="0.0.0.0", port=9000):
+async def _serve(executor, stop, host="0.0.0.0", port=9000):
     bound_handler = functools.partial(
-        _handler, event_loop=event_loop, executor=executor
+        _handler, executor=executor
     )
 
     async with websockets.serve(bound_handler, host, port):
         await stop
 
 
-async def _handler(ws, event_loop, executor):
+async def _handler(ws, executor):
     try:
         while True:
             recv_msg = await ws.recv()
-            asyncio.ensure_future(_handle_message(event_loop, executor, ws, recv_msg))
+            asyncio.ensure_future(_handle_message(executor, ws, recv_msg))
     except websockets.ConnectionClosed as e:
         print(f"ConnectionClosed: {ws.remote_address}")
     except Exception as e:
@@ -78,51 +79,37 @@ def _prepare_network_layout(args):
     )
 
 
-async def _handle_message(event_loop, executor, ws, recv_msg):
+async def _handle_message(executor, ws, recv_msg):
     m = json.loads(recv_msg)
     m_action = m["action"]
 
     if m_action == Message.passData:
-        await _send(event_loop, executor, ws, m["content"], _prepare_data)
+        await _send(executor, ws, m["content"], _prepare_data)
     elif m_action == Message.passNetworkLayout:
-        await _send(event_loop, executor, ws, m["content"], _prepare_network_layout)
+        await _send(executor, ws, m["content"], _prepare_network_layout)
 
 
 async def start_websocket_server(host="0.0.0.0", port=9000, max_workers=4):
+    executor = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
+
+    stop = asyncio.get_running_loop().create_future()
+
     if not sys.platform.startswith("win"):
-        import uvloop
+        asyncio.get_running_loop().add_signal_handler(signal.SIGINT, stop.set_result, True)
 
-        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-
-        event_loop = asyncio.get_event_loop()
-        executor = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
-
-        # The stop condition is set when receiving SIGINT.
-        stop = asyncio.Future()
-
-        event_loop.add_signal_handler(signal.SIGINT, stop.set_result, True)
-
-        # Run the server until the stop condition is met.
-        event_loop.run_until_complete(
-            await _serve(event_loop, executor, stop, host, port)
-        )
-    else:  # windows
-        # Windows cannot use uvloop library and signals
-        asyncio.set_event_loop_policy(asyncio.DefaultEventLoopPolicy())
-
-        event_loop = asyncio.get_event_loop()
-        executor = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
-
-        stop = asyncio.Future()
-
-        try:
-            await _serve(event_loop, executor, stop, host, port)
-            # event_loop.run_until_complete(
-            #     _serve(event_loop, executor, stop, host, port)
-            # )
-        finally:
-            executor.shutdown(wait=True)
-            # event_loop.close()
+    try:
+        await _serve(executor, stop, host, port)
+    finally:
+        executor.shutdown(wait=True)
 
 
-asyncio.run(start_websocket_server(host="0.0.0.0", port=9000, max_workers=4))
+if not sys.platform.startswith("win"):
+    import uvloop
+    asyncio.run(
+        start_websocket_server(host="0.0.0.0", port=9000, max_workers=4),
+        loop_factory=uvloop.new_event_loop,
+    )
+else:
+    asyncio.run(
+        start_websocket_server(host="0.0.0.0", port=9000, max_workers=4)
+    )
